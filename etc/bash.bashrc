@@ -14,11 +14,11 @@ shopt -s checkwinsize
 
 # === Oh-My-Posh ===
 # Install oh-my-posh if it's not installed:
-# curl -s https://ohmyposh.dev/install.sh | bash -s -- -d /usr/local/bin
-# mkdir -p /usr/share/oh-my-posh/themes
-# mv /root/.cache/oh-my-posh/themes/* /usr/share/oh-my-posh/themes/
-# curl -fsSL https://raw.githubusercontent.com/rdcstarr/resources/refs/heads/master/oh-my-posh/themes/recweb.omp.json -o /usr/share/oh-my-posh/themes/recweb.omp.json
-# chmod -R a+r /usr/share/oh-my-posh/themes
+# curl -s https://ohmyposh.dev/install.sh | sudo bash -s -- -d /usr/local/bin
+# sudo mkdir -p /usr/share/oh-my-posh/themes
+# sudo mv /root/.cache/oh-my-posh/themes/* /usr/share/oh-my-posh/themes/
+# sudo curl -fsSL https://raw.githubusercontent.com/rdcstarr/resources/refs/heads/master/oh-my-posh/themes/recweb.omp.json -o /usr/share/oh-my-posh/themes/recweb.omp.json
+# sudo chmod -R a+r /usr/share/oh-my-posh/themes
 eval "$(oh-my-posh init bash --config /usr/share/oh-my-posh/themes/recweb.omp.json)"
 
 # === Useful aliases ===
