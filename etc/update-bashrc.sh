@@ -2,7 +2,7 @@
 
 # Script for updating all .bashrc files
 # Author: Generated script for bashrc update
-# Usage: bash <(curl -fsSL https://git.recwebnetwork.com/etc/bash.bashrc)
+# Usage: wget -qO- https://git.recwebnetwork.com/etc/update-bashrc.sh | bash
 
 set -euo pipefail
 
