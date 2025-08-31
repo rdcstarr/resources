@@ -2,11 +2,12 @@
 
 # Script for updating all .bashrc files
 # Author: Generated script for bashrc update
+# Usage: bash <(curl -fsSL https://git.recwebnetwork.com/etc/bash.bashrc)
 
 set -euo pipefail
 
 # Configuration
-URL="https://raw.githubusercontent.com/rdcstarr/resources/refs/heads/master/etc/bash.bashrc"
+URL="https://git.recwebnetwork.com/etc/bash.bashrc"
 TEMP_FILE="/tmp/new_bashrc_$"
 BACKUP_SUFFIX=".backup.$(date +%Y%m%d_%H%M%S)"
 

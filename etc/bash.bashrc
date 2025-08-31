@@ -17,7 +17,7 @@ shopt -s checkwinsize
 # curl -s https://ohmyposh.dev/install.sh | sudo bash -s -- -d /usr/local/bin
 # sudo mkdir -p /usr/share/oh-my-posh/themes
 # sudo mv /root/.cache/oh-my-posh/themes/* /usr/share/oh-my-posh/themes/
-# sudo curl -fsSL https://raw.githubusercontent.com/rdcstarr/resources/refs/heads/master/oh-my-posh/themes/recweb.omp.json -o /usr/share/oh-my-posh/themes/recweb.omp.json
+# sudo curl -fsSL https://git.recwebnetwork.com/oh-my-posh/themes/recweb.omp.json -o /usr/share/oh-my-posh/themes/recweb.omp.json
 # sudo chmod -R a+r /usr/share/oh-my-posh/themes
 eval "$(oh-my-posh init bash --config /usr/share/oh-my-posh/themes/recweb.omp.json)"
 

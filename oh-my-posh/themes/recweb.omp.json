@@ -1,5 +1,5 @@
 {
-	"$schema": "https://raw.githubusercontent.com/rdcstarr/resources/refs/heads/master/oh-my-posh/themes/recweb.omp.json",
+	"$schema": "https://git.recwebnetwork.com/oh-my-posh/themes/recweb.omp.json",
 	"blocks": [
 		{
 			"alignment": "left",
