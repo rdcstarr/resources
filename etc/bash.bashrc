@@ -415,7 +415,7 @@ EOF
     then
         # simple generator: short random hex (e.g. c091) or fallback random value
         local RANDHEX
-        RANDHEX="$(openssl rand -hex 2 2>/dev/null || printf '%04x' $((RANDOM%65536)))"
+        RANDHEX="$(openssl rand -hex 2 2>/dev/null || printf '%06x' $((RANDOM%65536)))"
         MSG="${RANDHEX}"
     elif [ -z "$MSG" ] && [ "$AMEND" = "yes" ]
     then
