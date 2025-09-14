@@ -413,14 +413,10 @@ EOF
     # Random message if not provided
     if [ -z "$MSG" ] && [ "$AMEND" = "no" ]
     then
-        # simple generator: adj-noun + entropy
-        local ADJ=(quick neat bold crisp calm bright tiny solid sleek sharp clean smart fresh tidy)
-        local NOUN=(update tweak sync patch change polish refactor touch bump adjust tidyup hotfix)
-        local R1=$((RANDOM % ${#ADJ[@]}))
-        local R2=$((RANDOM % ${#NOUN[@]}))
+        # simple generator: short random hex (e.g. c091) or fallback random value
         local RANDHEX
-        RANDHEX="$(openssl rand -hex 2 2>/dev/null || echo $RANDOM)"
-        MSG="${PREFIX}: ${ADJ[$R1]}-${NOUN[$R2]}-${RANDHEX}"
+        RANDHEX="$(openssl rand -hex 2 2>/dev/null || printf '%04x' $((RANDOM%65536)))"
+        MSG="${RANDHEX}"
     elif [ -z "$MSG" ] && [ "$AMEND" = "yes" ]
     then
         # when amend without message => keep previous message (--no-edit)
