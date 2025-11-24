@@ -562,17 +562,20 @@ EOF
         return 1
     fi
 
-    # Create README
-    echo "📝  Creating README.md..."
-    echo "$README_TEXT" >> README.md || { echo "❌ Failed to create README.md"; return 1; }
-
-    # Initialize repo
+    # Initialize repo first
     echo "🔧  git init"
     git init || { echo "❌ git init failed"; return 1; }
 
-    # Add files
-    echo "➕  git add README.md"
-    git add README.md || { echo "❌ git add failed"; return 1; }
+    # Create README if it doesn't exist
+    if [ ! -f "README.md" ]
+    then
+        echo "📝  Creating README.md..."
+        echo "$README_TEXT" > README.md || { echo "❌ Failed to create README.md"; return 1; }
+    fi
+
+    # Add all files (respects .gitignore if exists)
+    echo "➕  git add -A"
+    git add -A || { echo "❌ git add failed"; return 1; }
 
     # First commit
     echo "📝  git commit -m \"$INITIAL_COMMIT\""
