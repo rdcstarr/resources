@@ -56,6 +56,7 @@ alias gp='git push'
 alias gl='git log --oneline --graph'
 alias release='git_release'
 alias push='git_push'
+alias init-repo='git_init_repo'
 
 
 # === Load additional files === 📂
@@ -467,6 +468,133 @@ EOF
     fi
 
     echo "✅  Pushed to $FINAL_REMOTE/$FINAL_BRANCH."
+}
+
+# === Git init helper for new repos === 🆕📦
+git_init_repo()
+{
+    local REPO_URL=""
+    local BRANCH="main"
+    local README_TEXT=""
+    local INITIAL_COMMIT="first commit"
+    local DRY_RUN="no"
+
+    # Parse args
+    while [ $# -gt 0 ]
+    do
+        case "$1" in
+            --url=*)
+                REPO_URL="${1#*=}"
+                ;;
+            --branch=*)
+                BRANCH="${1#*=}"
+                ;;
+            --readme=*)
+                README_TEXT="${1#*=}"
+                ;;
+            --commit=*)
+                INITIAL_COMMIT="${1#*=}"
+                ;;
+            -n|--dry-run)
+                DRY_RUN="yes"
+                ;;
+            -h|--help)
+                cat <<'EOF'
+Usage: git_init_repo --url=<github-url> [--branch=main] [--readme="text"] [--commit="first commit"] [-n|--dry-run]
+
+Initialize a new Git repository and push to GitHub.
+Examples:
+  git_init_repo --url=https://github.com/user/repo.git
+  git_init_repo --url=https://github.com/user/repo.git --readme="My Project"
+  git_init_repo --url=https://github.com/user/repo.git --branch=master
+  git_init_repo -n --url=https://github.com/user/repo.git  # dry-run
+EOF
+                return 0
+                ;;
+            *)
+                echo "❌ Unknown option: $1"
+                echo "Use --help for usage information."
+                return 1
+                ;;
+        esac
+        shift
+    done
+
+    # Validate URL
+    if [ -z "$REPO_URL" ]
+    then
+        echo "❌ Repository URL is required. Use --url=<github-url>"
+        return 1
+    fi
+
+    # Extract repo name from URL for README
+    local REPO_NAME
+    REPO_NAME="$(basename "$REPO_URL" .git)"
+
+    # Default README text if not provided
+    if [ -z "$README_TEXT" ]
+    then
+        README_TEXT="# ${REPO_NAME}"
+    fi
+
+    echo "📦  Initializing repository..."
+    echo "➡️  URL: $REPO_URL"
+    echo "➡️  Branch: $BRANCH"
+    echo "➡️  Commit: $INITIAL_COMMIT"
+
+    if [ "$DRY_RUN" = "yes" ]
+    then
+        echo "(dry-run) Commands that would be executed:"
+        echo "  echo \"$README_TEXT\" >> README.md"
+        echo "  git init"
+        echo "  git add README.md"
+        echo "  git commit -m \"$INITIAL_COMMIT\""
+        echo "  git branch -M $BRANCH"
+        echo "  git remote add origin $REPO_URL"
+        echo "  git push -u origin $BRANCH"
+        return 0
+    fi
+
+    # Check if already a git repo
+    if git rev-parse --is-inside-work-tree >/dev/null 2>&1
+    then
+        echo "❌ Already a Git repository. Use 'git remote add origin <url>' instead."
+        return 1
+    fi
+
+    # Create README
+    echo "📝  Creating README.md..."
+    echo "$README_TEXT" >> README.md || { echo "❌ Failed to create README.md"; return 1; }
+
+    # Initialize repo
+    echo "🔧  git init"
+    git init || { echo "❌ git init failed"; return 1; }
+
+    # Add files
+    echo "➕  git add README.md"
+    git add README.md || { echo "❌ git add failed"; return 1; }
+
+    # First commit
+    echo "📝  git commit -m \"$INITIAL_COMMIT\""
+    git commit -m "$INITIAL_COMMIT" || { echo "❌ git commit failed"; return 1; }
+
+    # Set branch name
+    echo "🌿  git branch -M $BRANCH"
+    git branch -M "$BRANCH" || { echo "❌ git branch failed"; return 1; }
+
+    # Add remote
+    echo "🔗  git remote add origin $REPO_URL"
+    git remote add origin "$REPO_URL" || { echo "❌ git remote add failed"; return 1; }
+
+    # Push
+    echo "🚀  git push -u origin $BRANCH"
+    if ! git push -u origin "$BRANCH"
+    then
+        echo "❌ git push failed. Check your credentials and repository access."
+        return 1
+    fi
+
+    echo "✅  Repository initialized and pushed to $REPO_URL"
 }
 
 # === Environment variables === 🌐
