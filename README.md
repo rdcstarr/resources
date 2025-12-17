@@ -1,7 +1,9 @@
-# Rdcstarr Resources
+# Rdcstarr resources
+
 A collection of scripts, configurations, and tools for enhancing productivity and system management.
 
-## Bash Configuration
+## Bash configuration
+
 If you want to use this `.bashrc`, run the following command in your terminal:
 
 ```bash
