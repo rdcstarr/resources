@@ -17,6 +17,15 @@
 					"type": "os"
 				},
 				{
+					"background": "#82AAFF",
+					"background_templates": ["{{ if env \"OMP_HOST_BG\" }}{{ env \"OMP_HOST_BG\" }}{{ else }}#82AAFF{{ end }}"],
+					"foreground": "#011627",
+					"powerline_symbol": "\ue0b0",
+					"style": "powerline",
+					"template": " \uf233 {{ .HostName }} ",
+					"type": "session"
+				},
+				{
 					"background": "#d4d73c",
 					"foreground": "#011627",
 					"leading_diamond": "<transparent,#d4d73c>\ue0b0</>",
@@ -42,12 +51,7 @@
 				},
 				{
 					"background": "#addb67",
-					"background_templates": [
-						"{{ if or (.Working.Changed) (.Staging.Changed) }}#e4cf6a{{ end }}",
-						"{{ if and (gt .Ahead 0) (gt .Behind 0) }}#f78c6c{{ end }}",
-						"{{ if gt .Ahead 0 }}#C792EA{{ end }}",
-						"{{ if gt .Behind 0 }}#c792ea{{ end }}"
-					],
+					"background_templates": ["{{ if or (.Working.Changed) (.Staging.Changed) }}#e4cf6a{{ end }}", "{{ if and (gt .Ahead 0) (gt .Behind 0) }}#f78c6c{{ end }}", "{{ if gt .Ahead 0 }}#C792EA{{ end }}", "{{ if gt .Behind 0 }}#c792ea{{ end }}"],
 					"foreground": "#011627",
 					"powerline_symbol": "\ue0b0",
 					"properties": {
@@ -392,9 +396,7 @@
 				},
 				{
 					"foreground": "#22da6e",
-					"foreground_templates": [
-						"{{ if gt .Code 0 }}#ef5350{{ end }}"
-					],
+					"foreground_templates": ["{{ if gt .Code 0 }}#ef5350{{ end }}"],
 					"properties": {
 						"always_enabled": true
 					},

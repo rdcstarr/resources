@@ -607,3 +607,132 @@ export PAGER='less'
 
 # Settings for less
 export LESS='-R --use-color -Dd+r$Du+b'
+
+# === SSH helpers === 🔐
+# Usage:
+#   hosts        # list host names from ~/.ssh/config (and Include files)
+#   hosts foo    # filter by substring (case-insensitive)
+__ssh__config_files()
+{
+    local main_config="$HOME/.ssh/config"
+    local -a queue=("$main_config")
+    local -a out=()
+    local -A visited=()
+
+    while ((${#queue[@]})); do
+        local file="${queue[-1]}"
+        unset 'queue[-1]'
+
+        [[ -r "$file" ]] || continue
+        [[ -n "${visited["$file"]+x}" ]] && continue
+        visited["$file"]=1
+        out+=("$file")
+
+        while IFS= read -r line || [[ -n "$line" ]]; do
+            line="${line%$'\r'}"
+            # Strip comments safely (do not break Host aliases containing '#')
+            if [[ "$line" =~ ^[[:space:]]*# ]]; then
+                continue
+            fi
+            line="${line%%[[:space:]]#*}"
+
+            [[ "$line" =~ ^[[:space:]]*Include[[:space:]]+(.+)$ ]] || continue
+
+            local rest="${BASH_REMATCH[1]}"
+            local -a patterns=()
+            read -r -a patterns <<<"$rest"
+
+            local pattern
+            for pattern in "${patterns[@]}"; do
+                [[ -n "$pattern" ]] || continue
+
+                if [[ "$pattern" == "~/"* ]]; then
+                    pattern="$HOME/${pattern:2}"
+                elif [[ "$pattern" != /* ]]; then
+                    pattern="$HOME/.ssh/$pattern"
+                fi
+
+                local match
+                while IFS= read -r match; do
+                    queue+=("$match")
+                done < <(compgen -G "$pattern")
+            done
+        done <"$file"
+    done
+
+    printf '%s\n' "${out[@]}"
+}
+
+__ssh__list_hosts()
+{
+    local -a files=()
+    mapfile -t files < <(__ssh__config_files)
+    ((${#files[@]})) || return 0
+
+    awk '
+        {
+            sub(/\r$/, "")
+            # Strip comments safely: whole-line comments or inline comments preceded by whitespace
+            sub(/^[[:space:]]*#.*/, "")
+            sub(/[[:space:]]+#.*/, "")
+        }
+        /^[[:space:]]*Host[[:space:]]+/ {
+            for (i = 2; i <= NF; i++) {
+                if ($i !~ /[*?]/) print $i
+            }
+        }
+    ' "${files[@]}" 2>/dev/null | sort -u
+}
+
+hosts()
+{
+    if [[ $# -ge 1 && -n "$1" ]]; then
+        __ssh__list_hosts | grep -i -- "$1"
+    else
+        __ssh__list_hosts
+    fi
+}
+
+# Open ~/.ssh/config quickly
+open_hosts()
+{
+    mkdir -p "$HOME/.ssh"
+    touch "$HOME/.ssh/config"
+
+    case "$1" in
+        --code)
+            if command -v code >/dev/null 2>&1
+            then
+                code "$HOME/.ssh/config"
+            else
+                nano "$HOME/.ssh/config"
+            fi
+            ;;
+        *)
+            nano "$HOME/.ssh/config"
+            ;;
+    esac
+}
+
+alias open-hosts='open_hosts'
+
+# === OMP host background color based on hostname === 🎨
+omp_host_bg() {
+  local host
+  host="$(hostname)"
+
+  local palette=(
+    "#99D63C" "#8FD13A" "#A3DE5A" "#7CCB3E" "#6FCF97"
+    "#5FD068" "#74D66A" "#B0E65C" "#9AE66E" "#88E06A"
+    "#7FD94E" "#6EDC5F" "#5EDB73" "#4EDB8A" "#63E39C"
+    "#7EE8A1" "#9BEA8C" "#B6EF7E" "#C1F27A" "#D0F06B"
+  )
+
+  local idx
+  idx=$(printf '%s' "$host" | sha256sum | awk '{print $1}' | cut -c1-8)
+  idx=$(( 0x$idx % ${#palette[@]} ))
+
+  export OMP_HOST_BG="${palette[$idx]}"
+}
+
+omp_host_bg
