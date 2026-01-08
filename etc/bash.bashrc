@@ -722,10 +722,10 @@ omp_host_bg() {
   host="$(hostname)"
 
   local palette=(
-    "#99D63C" "#8FD13A" "#A3DE5A" "#7CCB3E" "#6FCF97"
-    "#5FD068" "#74D66A" "#B0E65C" "#9AE66E" "#88E06A"
-    "#7FD94E" "#6EDC5F" "#5EDB73" "#4EDB8A" "#63E39C"
-    "#7EE8A1" "#9BEA8C" "#B6EF7E" "#C1F27A" "#D0F06B"
+    "#E49595" "#E4AD95" "#E4C395" "#E4D795" "#D7E495"
+    "#B6E495" "#95E495" "#95E4B6" "#95E4D7" "#95D1E4"
+    "#95B6E4" "#959CE4" "#A995E4" "#C395E4" "#DE95E4"
+    "#E495D1" "#E495BD" "#E495A9" "#95E4CA" "#E4CA95"
   )
 
   local idx
