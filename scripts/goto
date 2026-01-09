@@ -1,0 +1,98 @@
+#!/usr/bin/env bash
+
+# goto: enter the document root (public_html) for a domain/subdomain/alias in HestiaCP
+# Usage: goto domain.tld
+
+set -o pipefail
+
+domain="$1"
+
+if [ -z "$domain" ]
+then
+    {
+        echo "Usage: goto domain.tld"
+        exit 1
+    }
+fi
+
+# normalize domain (remove www.)
+domain="${domain#www.}"
+
+# Use v-search-object to find domain information
+search_result=$(v-search-object "$domain" 2>/dev/null)
+
+if [ $? -ne 0 ] || [ -z "$search_result" ]
+then
+    {
+        echo "Could not find domain '$domain' in Hestia or v-search-object failed."
+        exit 1
+    }
+fi
+
+# Parse v-search-object output to find web domain
+web_info=$(echo "$search_result" | awk '
+BEGIN {
+	found_user = ""
+	found_domain = ""
+}
+NR > 2 && $2 == "web" && $3 == "DOMAIN" {
+	# Check if domain matches in RESULT column (column 4)
+	if ($4 == domain) {
+		found_user = $1
+		found_domain = $4
+		print found_user ":" found_domain
+		exit
+	}
+
+	# Check if domain matches in ALIAS column (column 5+)
+	alias_line = $0
+	gsub(/^[^ ]+ +[^ ]+ +[^ ]+ +[^ ]+ +/, "", alias_line)  # Remove first 4 columns
+	if (index(alias_line, domain) > 0) {
+		# Split aliases and check each one
+		n = split(alias_line, aliases, /[ ,]+/)
+		for (i = 1; i <= n; i++) {
+			if (aliases[i] == domain) {
+				found_user = $1
+				found_domain = $4  # Main domain is in RESULT column
+				print found_user ":" found_domain
+				exit
+			}
+		}
+	}
+}' domain="$domain")
+
+if [ -z "$web_info" ]
+then
+    {
+        echo "Could not find web domain '$domain'."
+        exit 1
+    }
+fi
+
+# Extract user and domain from result
+user_name="${web_info%%:*}"
+doc_domain="${web_info##*:}"
+
+if [ -z "$user_name" ] || [ -z "$doc_domain" ]
+then
+    {
+        echo "Could not determine user and domain for '$domain'."
+        exit 1
+    }
+fi
+
+target="/home/$user_name/web/$doc_domain/public_html"
+
+if [ ! -d "$target" ]
+then
+    {
+        echo "Directory does not exist: $target"
+        exit 1
+    }
+fi
+
+cd "$target" || exit 1
+echo "You have moved to: $target"
+
+# subshell in target directory (script-like behavior)
+exec "$SHELL"

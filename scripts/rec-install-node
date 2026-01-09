@@ -1,0 +1,192 @@
+#!/usr/bin/env bash
+# Node.js + NPM Installer (NodeSource) with auto-detect major LTS/Current
+# Compatible: Debian 11 (HestiaCP ok), Debian/Ubuntu in general
+# Usage:
+#   rec-install-node # LTS default
+#   rec-install-node --channel current
+#   rec-install-node --channel lts
+
+set -euo pipefail
+
+CHANNEL="lts"   # lts | current
+
+print_usage()
+{
+	cat <<'USAGE'
+Node.js Installer (NodeSource) with auto-detect latest major version.
+Usage:
+  rec-install-node [--channel lts|current]
+
+Examples:
+  rec-install-node
+  rec-install-node --channel current
+USAGE
+}
+
+log()
+{
+    echo -e "[INFO] $*"
+}
+
+err()
+{
+    echo -e "[ERROR] $*" >&2
+}
+
+require_root()
+{
+    if [[ "${EUID}" -ne 0 ]]
+    then
+        err "Run the script with root privileges (e.g. sudo)."
+        exit 1
+    fi
+}
+
+parse_args()
+{
+    while [[ $# -gt 0 ]]
+    do
+        case "$1" in
+            --channel)
+                CHANNEL="${2:-}"
+                shift 2
+            ;;
+            -h|--help)
+                print_usage
+                exit 0
+            ;;
+            *)
+                err "Unknown argument: $1"
+                print_usage
+                exit 1
+            ;;
+        esac
+    done
+    
+    if [[ "${CHANNEL}" != "lts" && "${CHANNEL}" != "current" ]]
+    then
+        err "--channel must be 'lts' or 'current' (default: lts)."
+        exit 1
+    fi
+}
+
+detect_os()
+{
+    if [[ -f /etc/os-release ]]
+    then
+        . /etc/os-release
+        log "System: ${PRETTY_NAME:-unknown}"
+    else
+        err "Cannot detect distribution (missing /etc/os-release)."
+        exit 1
+    fi
+}
+
+ensure_deps()
+{
+    log "Updating package list..."
+    apt-get update -y
+    
+    log "Installing dependencies: curl, ca-certificates, gnupg, jq..."
+    apt-get install -y curl ca-certificates gnupg jq
+}
+
+fetch_latest_major()
+{
+    local channel="$1"
+    local version_json
+    local version
+    
+    log "Querying official Node.js index to determine latest version (${channel^^})..."
+    
+    # Get the list of versions; use jq to select the desired variant.
+    version_json="$(curl -fsSL https://nodejs.org/dist/index.json)"
+    
+    if [[ "${channel}" == "lts" ]]
+    then
+        # First LTS entry in the list (index.json is sorted desc)
+        version="$(echo "${version_json}" | jq -r '[.[] | select(.lts != false) | .version][0]')"
+    else
+        # First entry (Current) in the list
+        version="$(echo "${version_json}" | jq -r '.[0].version')"
+    fi
+    
+    if [[ -z "${version}" || "${version}" == "null" ]]
+    then
+        err "Failed to detect version from Node.js index."
+        exit 1
+    fi
+    
+    # Extract major (ex: v20.11.1 -> 20)
+    version="${version#v}"
+    MAJOR="${version%%.*}"
+    
+    if ! [[ "${MAJOR}" =~ ^[0-9]+$ ]]
+    then
+        err "Invalid major detected: '${MAJOR}'."
+        exit 1
+    fi
+    
+    log "Latest detected ${channel^^} version: ${version} (major=${MAJOR})."
+}
+
+setup_nodesource_repo()
+{
+    log "Configuring NodeSource repository for Node.js ${MAJOR}.x ..."
+    # Official NodeSource script adds repo + keys
+    curl -fsSL "https://deb.nodesource.com/setup_${MAJOR}.x" | bash -
+}
+
+install_node()
+{
+    log "Installing nodejs from NodeSource..."
+    apt-get install -y nodejs
+    
+    # Optional: useful toolchain for many npm packages (node-gyp)
+    apt-get install -y build-essential
+    
+    log "Checking installed versions:"
+    node -v || true
+    npm -v || true
+}
+
+upgrade_npm()
+{
+    # Node generally comes with npm, but update to latest (global)
+    if command -v npm >/dev/null 2>&1
+    then
+        log "Updating npm to the latest available version..."
+        npm install -g npm@latest
+        log "npm updated: $(npm -v)"
+    else
+        err "npm is not available after Node installation. Check the logs."
+        exit 1
+    fi
+}
+
+enable_corepack()
+{
+    # For modern yarn/pnpm (Node 16+ includes corepack)
+    if command -v corepack >/dev/null 2>&1
+    then
+        log "Enabling corepack (for yarn/pnpm on demand)..."
+        corepack enable || true
+    fi
+}
+
+main()
+{
+    require_root
+    parse_args "$@"
+    detect_os
+    ensure_deps
+    fetch_latest_major "${CHANNEL}"
+    setup_nodesource_repo
+    install_node
+    upgrade_npm
+    enable_corepack
+    
+    log "DONE! Node.js $(node -v) and npm $(npm -v) are installed."
+}
+
+main "$@"
