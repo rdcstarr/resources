@@ -30,3 +30,14 @@ If you want to use this `.bashrc`, run the following command in your terminal:
 ```bash
 wget -qO- https://git.recwebnetwork.com/etc/update-bashrc.sh | sudo bash
 ```
+
+## Claude behavioral rules
+
+Install the Claude Code behavioral ruleset (Karpathy + Caveman) globally:
+
+```bash
+mkdir -p ~/.claude
+curl -fsSL https://git.recwebnetwork.com/claude/CLAUDE.md -o ~/.claude/CLAUDE.md
+```
+
+See [claude/README.md](claude/README.md) for project-local install and details.
